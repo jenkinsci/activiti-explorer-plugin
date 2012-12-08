@@ -43,17 +43,14 @@ public class ActivitiExplorer implements UnprotectedRootAction {
     @Inject
     DescriptorImpl descriptor;
 
-    @Override
     public String getIconFileName() {
         return "setting.png";
     }
 
-    @Override
     public String getDisplayName() {
         return "Activiti Explorer";
     }
 
-    @Override
     public String getUrlName() {
         return "activiti-explorer";
     }

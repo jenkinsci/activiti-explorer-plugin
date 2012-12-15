@@ -11,9 +11,14 @@
 
   <dependencies>
     <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>activiti-explorer-dto</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
       <groupId>com.cisco.step.jenkins.plugins</groupId>
       <artifactId>jenkow-plugin</artifactId>
-      <version>0.2.5-SNAPSHOT</version>
+      <version>0.2.6-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>com.cloudbees</groupId>

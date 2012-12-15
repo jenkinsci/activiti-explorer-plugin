@@ -1,46 +1,45 @@
 package org.jenkinsci.plugins.jenkow.activiti.override;
 
 import org.activiti.explorer.identity.LoggedInUser;
-
-import java.util.Map;
+import org.jenkinsci.plugins.activiti_explorer.dto.UserDTO;
 
 /**
  * @author Kohsuke Kawaguchi
  */
 public class JenkinsUser implements LoggedInUser {
-    private final Map bag;
+    private final UserDTO dto;
 
-    public JenkinsUser(Map bag) {
-        if (bag==null)
+    public JenkinsUser(UserDTO dto) {
+        if (dto ==null)
             throw new IllegalArgumentException("No information given");
-        this.bag = bag;
+        this.dto = dto;
     }
 
     public String getId() {
-        return (String)bag.get("id");
+        return dto.id;
     }
 
     public String getFirstName() {
-        return (String)bag.get("firstName");
+        return dto.firstName;
     }
 
     public String getLastName() {
-        return (String)bag.get("lastName");
+        return dto.lastName;
     }
 
     public String getFullName() {
-        return (String)bag.get("fullName");
+        return dto.fullName;
     }
 
     public String getPassword() {
-        return (String)bag.get("password");
+        return null;
     }
 
     public boolean isAdmin() {
-        return bag.containsKey("admin");
+        return dto.isAdmin;
     }
 
     public boolean isUser() {
-        return bag.containsKey("user");
+        return dto.isUser;
     }
 }

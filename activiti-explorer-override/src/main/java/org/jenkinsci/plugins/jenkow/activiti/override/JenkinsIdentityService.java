@@ -6,8 +6,17 @@ import org.activiti.engine.identity.GroupQuery;
 import org.activiti.engine.identity.Picture;
 import org.activiti.engine.identity.User;
 import org.activiti.engine.identity.UserQuery;
+import org.activiti.engine.impl.Page;
+import org.activiti.engine.impl.UserQueryImpl;
 import org.activiti.engine.impl.identity.Account;
+import org.activiti.engine.impl.interceptor.CommandContext;
+import org.jenkinsci.plugins.activiti_explorer.dto.JenkinsService;
+import org.jenkinsci.plugins.activiti_explorer.dto.UserDTO;
+import org.jenkinsci.plugins.activiti_explorer.dto.UserQueryDTO;
+import org.springframework.web.context.ServletContextAware;
 
+import javax.servlet.ServletContext;
+import java.util.AbstractList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -19,7 +28,13 @@ import java.util.Map;
  *
  * @author Kohsuke Kawaguchi
  */
-public class JenkinsIdentityService implements IdentityService {
+public class JenkinsIdentityService implements IdentityService, ServletContextAware {
+    private JenkinsService jenkinsService;
+
+    public void setServletContext(ServletContext servletContext) {
+        this.jenkinsService = (JenkinsService)servletContext.getAttribute(JenkinsService.class.getName());
+    }
+
     @Override
     public User newUser(String userId) {
         throw new UnsupportedOperationException();
@@ -32,8 +47,37 @@ public class JenkinsIdentityService implements IdentityService {
 
     @Override
     public UserQuery createUserQuery() {
-        // TODO
-        throw new UnsupportedOperationException();
+        return new UserQueryImpl() {
+            @Override
+            public List<User> executeList(CommandContext _, Page page) {
+                UserQueryDTO q = new UserQueryDTO();
+                q.email = email;
+                q.emailLike  = emailLike;
+                q.firstName = firstName;
+                q.firstNameLike = firstNameLike;
+                q.lastName = lastName;
+                q.lastNameLike = lastNameLike;
+                q.id = id;
+                final List<UserDTO> v = jenkinsService.query(q);
+                return new AbstractList<User>() {
+                    @Override
+                    public User get(int index) {
+                        UserDTO u = v.get(index);
+                        return new ImmutableUser(u.id,u.firstName,u.lastName,u.email);
+                    }
+
+                    @Override
+                    public int size() {
+                        return v.size();
+                    }
+                };
+            }
+
+            @Override
+            public long executeCount(CommandContext _) {
+                return executeList(_,null).size();
+            }
+        };
     }
 
     @Override

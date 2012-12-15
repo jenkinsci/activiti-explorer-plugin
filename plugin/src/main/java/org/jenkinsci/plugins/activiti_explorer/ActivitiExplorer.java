@@ -15,6 +15,7 @@ import org.dom4j.Element;
 import org.dom4j.io.OutputFormat;
 import org.dom4j.io.SAXReader;
 import org.dom4j.io.XMLWriter;
+import org.jenkinsci.plugins.activiti_explorer.dto.UserDTO;
 import org.jenkinsci.plugins.jenkow.activiti.override.JenkinsUser;
 import org.jenkinsci.plugins.jenkow.activiti.override.ServletContextDataSource;
 import org.kohsuke.stapler.StaplerRequest;
@@ -27,7 +28,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
-import java.util.Properties;
+import java.net.URLClassLoader;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 
@@ -42,6 +43,9 @@ public class ActivitiExplorer implements UnprotectedRootAction {
 
     @Inject
     DescriptorImpl descriptor;
+
+    @Inject
+    JenkinsServiceImpl jenkinsService;
 
     public String getIconFileName() {
         return "setting.png";
@@ -68,19 +72,18 @@ public class ActivitiExplorer implements UnprotectedRootAction {
      *
      * We rely on typeless Map because those two apps don't share any classes between them.
      */
-    private Properties createUserInfo() {
+    private UserDTO createUserInfo() {
         Authentication a = Jenkins.getAuthentication();
         User u = User.current();
 
-        Properties user = new Properties();
-        user.setProperty("id", a.getName());
-        user.setProperty("firstName",u != null ? u.getFullName() : a.getName());
-        user.setProperty("lastName","");
-        user.setProperty("fullName", u != null ? u.getFullName() : a.getName());
+        UserDTO user = new UserDTO();
+        user.id = a.getName();
+        user.firstName = u != null ? u.getFullName() : a.getName();
+        user.lastName = "";
+        user.fullName = u != null ? u.getFullName() : a.getName();
+        user.isAdmin = Jenkins.getInstance().getACL().hasPermission(a,Jenkins.ADMINISTER);
+        user.isUser = true;
 
-        // TODO: permission support
-        user.setProperty("isAdmin","true");
-        user.setProperty("isUser","true");
         return user;
     }
 
@@ -164,8 +167,16 @@ public class ActivitiExplorer implements UnprotectedRootAction {
 
                 // pass through to the servlet container so that Activiti won't get confused
                 // by what Jenkins loads (e.g., log4j version inconsistency)
-                // but we do expose some selected resources to control its behavior.
-                webApp.setParentClassLoader(HttpServletRequest.class.getClassLoader());
+                // but we do expose DTO classes to share them between two apps.
+                webApp.setParentClassLoader(new URLClassLoader(new URL[0],HttpServletRequest.class.getClassLoader()) {
+                    @Override
+                    protected Class<?> findClass(String name) throws ClassNotFoundException {
+                        if (name.startsWith("org.jenkinsci.plugins.activiti_explorer.dto.")) {
+                            return getClass().getClassLoader().loadClass(name);
+                        }
+                        throw new ClassNotFoundException(name);
+                    }
+                });
 
                 webApp.start();
             } catch (Exception e) {

@@ -16,6 +16,7 @@
 
   <modules>
     <module>plugin</module>
+    <module>dto</module>
     <module>activiti-explorer-override</module>
   </modules>
   

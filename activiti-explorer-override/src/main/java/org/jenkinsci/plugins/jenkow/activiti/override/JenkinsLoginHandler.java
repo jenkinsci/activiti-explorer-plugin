@@ -2,6 +2,7 @@ package org.jenkinsci.plugins.jenkow.activiti.override;
 
 import org.activiti.explorer.ui.login.LoginHandler;
 import org.activiti.explorer.identity.LoggedInUser;
+import org.jenkinsci.plugins.activiti_explorer.dto.UserDTO;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -30,7 +31,7 @@ public class JenkinsLoginHandler implements LoginHandler {
      * credentials.
      */
     public LoggedInUser authenticate(HttpServletRequest request, HttpServletResponse response) {
-        return new JenkinsUser((Map)request.getSession().getAttribute("jenkins.user"));
+        return new JenkinsUser((UserDTO)request.getSession().getAttribute("jenkins.user"));
     }
 
     /**

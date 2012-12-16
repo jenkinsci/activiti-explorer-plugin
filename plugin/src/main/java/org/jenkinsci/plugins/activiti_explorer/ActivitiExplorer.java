@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.activiti_explorer;
 
 import com.cisco.step.jenkins.plugins.jenkow.JenkowBuilder.DescriptorImpl;
+import com.cisco.step.jenkins.plugins.jenkow.JenkowEngine;
 import com.cloudbees.vietnam4j.ProxiedWebApplication;
 import hudson.Extension;
 import hudson.Util;
@@ -8,6 +9,7 @@ import hudson.model.UnprotectedRootAction;
 import hudson.model.User;
 import jenkins.model.Jenkins;
 import org.acegisecurity.Authentication;
+import org.activiti.engine.ProcessEngine;
 import org.apache.commons.io.IOUtils;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
@@ -16,6 +18,7 @@ import org.dom4j.io.OutputFormat;
 import org.dom4j.io.SAXReader;
 import org.dom4j.io.XMLWriter;
 import org.jenkinsci.plugins.activiti_explorer.dto.UserDTO;
+import org.jenkinsci.plugins.jenkow.activiti.override.JenkinsProcessEngineFactory;
 import org.jenkinsci.plugins.jenkow.activiti.override.JenkinsUser;
 import org.jenkinsci.plugins.jenkow.activiti.override.ServletContextDataSource;
 import org.kohsuke.stapler.StaplerRequest;
@@ -48,7 +51,7 @@ public class ActivitiExplorer implements UnprotectedRootAction {
     JenkinsServiceImpl jenkinsService;
 
     public String getIconFileName() {
-        return "setting.png";
+        return "/plugin/activiti-explorer/images/24x24/activiti.png";
     }
 
     public String getDisplayName() {
@@ -134,11 +137,26 @@ public class ActivitiExplorer implements UnprotectedRootAction {
         ds.addAttribute("class", ServletContextDataSource.class.getName());
 
         // patch login handler
-//        Element lh = (Element)dom.selectSingleNode("/*/*[@id='activitiLoginHandler']");
-//        if (lh==null)
-//            throw new IllegalStateException("Can't find the login handler bean in "+xml);
-//        lh.elements().clear();
-//        lh.addAttribute("class", "org.jenkinsci.plugins.jenkow.activiti.override.JenkinsLoginHandler");
+        Element lh = (Element)dom.selectSingleNode("/*/*[@id='activitiLoginHandler']");
+        if (lh==null)
+            throw new IllegalStateException("Can't find the login handler bean in "+xml);
+        lh.elements().clear();
+        lh.addAttribute("class", "org.jenkinsci.plugins.jenkow.activiti.override.JenkinsLoginHandler");
+
+        // inject our own ProcessEngine
+        Element pe = (Element)dom.selectSingleNode("/*/*[@id='processEngine']");
+        if (pe==null)
+            throw new IllegalStateException("Can't find the processEngine bean in "+xml);
+        pe.elements().clear();
+        pe.attributes().clear();
+        pe.addAttribute("id", "processEngine");
+        pe.addAttribute("class", "org.jenkinsci.plugins.jenkow.activiti.override.JenkinsProcessEngineFactory");
+
+        // no more demo data generation
+        Element ddg = (Element)dom.selectSingleNode("/*/*[@id='demoDataGenerator']");
+        if (ddg==null)
+            throw new IllegalStateException("Can't find the demoDataGenerator bean in "+xml);
+        ddg.getParent().remove(ddg);
 
         FileOutputStream out = new FileOutputStream(xml);
         try {
@@ -160,10 +178,14 @@ public class ActivitiExplorer implements UnprotectedRootAction {
                         war,
                         req.getContextPath()+'/'+getUrlName());
 
+                webApp.setParentLoaderHasPriority(true);
+
                 webApp.addClassPath(ourLoader.getResource("activiti-explorer-override.jar"));
                 // inject DataSource
                 webApp.getProxiedServletContext().setAttribute(ServletContextDataSource.class.getName(),
                         descriptor.getDatabase().getDataSource());
+                webApp.getProxiedServletContext().setAttribute(ProcessEngine.class.getName(),
+                        JenkowEngine.getEngine());
 
                 // pass through to the servlet container so that Activiti won't get confused
                 // by what Jenkins loads (e.g., log4j version inconsistency)
@@ -171,7 +193,8 @@ public class ActivitiExplorer implements UnprotectedRootAction {
                 webApp.setParentClassLoader(new URLClassLoader(new URL[0],HttpServletRequest.class.getClassLoader()) {
                     @Override
                     protected Class<?> findClass(String name) throws ClassNotFoundException {
-                        if (name.startsWith("org.jenkinsci.plugins.activiti_explorer.dto.")) {
+                        if (name.startsWith("org.jenkinsci.plugins.activiti_explorer.dto.")
+                         || name.startsWith("org.activiti.engine.")) {
                             return getClass().getClassLoader().loadClass(name);
                         }
                         throw new ClassNotFoundException(name);

@@ -18,8 +18,6 @@ import org.dom4j.io.OutputFormat;
 import org.dom4j.io.SAXReader;
 import org.dom4j.io.XMLWriter;
 import org.jenkinsci.plugins.activiti_explorer.dto.UserDTO;
-import org.jenkinsci.plugins.jenkow.activiti.override.JenkinsProcessEngineFactory;
-import org.jenkinsci.plugins.jenkow.activiti.override.JenkinsUser;
 import org.jenkinsci.plugins.jenkow.activiti.override.ServletContextDataSource;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
@@ -47,9 +45,6 @@ public class ActivitiExplorer implements UnprotectedRootAction {
     @Inject
     DescriptorImpl descriptor;
 
-    @Inject
-    JenkinsServiceImpl jenkinsService;
-
     public String getIconFileName() {
         return "/plugin/activiti-explorer/images/24x24/activiti.png";
     }
@@ -71,9 +66,7 @@ public class ActivitiExplorer implements UnprotectedRootAction {
     }
 
     /**
-     * Creates a map that gets passed to {@link JenkinsUser} of the embedded activiti explorer.
-     *
-     * We rely on typeless Map because those two apps don't share any classes between them.
+     * Creates {@link UserDTO} that represents the currently logged-in user.
      */
     private UserDTO createUserInfo() {
         Authentication a = Jenkins.getAuthentication();

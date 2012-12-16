@@ -24,7 +24,7 @@ abstract class XmlPatcher {
     }
 
     protected Element findBean(String id) {
-        Element bean = (Element)dom.selectSingleNode(String.format("/*/bean[@id='%s']", id));
+        Element bean = (Element)dom.selectSingleNode(String.format("/*/*[@id='%s' or @name='%s']", id,id));
         if (bean==null)
             throw new IllegalStateException("Can't find the "+id+" bean in "+xml);
         return bean;

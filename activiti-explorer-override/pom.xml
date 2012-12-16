@@ -25,13 +25,6 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>org.activiti</groupId>
-      <artifactId>activiti-webapp-explorer2</artifactId>
-      <type>warpath</type>
-      <version>5.10</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>activiti-explorer-dto</artifactId>
       <version>${project.version}</version>
@@ -39,27 +32,9 @@
     <dependency>
       <groupId>org.activiti</groupId>
       <artifactId>activiti-webapp-explorer2</artifactId>
-      <type>war</type>
+      <type>jar</type>
       <version>5.10</version>
       <scope>provided</scope>
     </dependency>
   </dependencies>
-
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.appfuse</groupId>
-        <artifactId>maven-warpath-plugin</artifactId>
-        <version>2.0.2</version>
-        <extensions>true</extensions>
-        <executions>
-          <execution>
-            <goals>
-              <goal>add-classes</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
-  </build>
 </project>

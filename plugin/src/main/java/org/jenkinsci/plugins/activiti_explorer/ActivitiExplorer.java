@@ -131,6 +131,12 @@ public class ActivitiExplorer implements UnprotectedRootAction {
                 removeBean("demoDataGenerator");
             }
         };
+        new XmlPatcher(new File(war,"WEB-INF/activiti-ui-context.xml")) {
+            public void patch() {
+                // tweak the navigation bar
+                overrideBeanTo("componentFactories", "org.jenkinsci.plugins.jenkow.activiti.override.JenkinsComponentFactories");
+            }
+        };
     }
 
     private synchronized ProxiedWebApplication getProxyWebApplication(StaplerRequest req) throws ServletException {

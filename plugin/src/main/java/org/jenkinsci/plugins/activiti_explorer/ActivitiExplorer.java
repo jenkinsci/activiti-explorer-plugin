@@ -11,13 +11,9 @@ import jenkins.model.Jenkins;
 import org.acegisecurity.Authentication;
 import org.activiti.engine.ProcessEngine;
 import org.apache.commons.io.IOUtils;
-import org.dom4j.Document;
 import org.dom4j.DocumentException;
-import org.dom4j.Element;
-import org.dom4j.io.OutputFormat;
-import org.dom4j.io.SAXReader;
-import org.dom4j.io.XMLWriter;
 import org.jenkinsci.plugins.activiti_explorer.dto.UserDTO;
+import org.jenkinsci.plugins.jenkow.activiti.override.JenkinsProcessEngineFactory;
 import org.jenkinsci.plugins.jenkow.activiti.override.ServletContextDataSource;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
@@ -119,44 +115,22 @@ public class ActivitiExplorer implements UnprotectedRootAction {
      * Patch activiti-explorer war file so that we can inject our stuff into it.
      */
     private void patch(File war) throws DocumentException, IOException {
-        File xml = new File(war,"WEB-INF/applicationContext.xml");
-        Document dom = new SAXReader().read(xml);
+        new XmlPatcher(new File(war,"WEB-INF/applicationContext.xml")) {
+            public void patch() {
+                // patch data source in
+                overrideBeanTo("dataSource", ServletContextDataSource.class.getName());
 
-        // patch data source
-        Element ds = (Element)dom.selectSingleNode("/*/*[@id='dataSource']");
-        if (ds==null)
-            throw new IllegalStateException("Can't find the dataSource bean in "+xml);
-        ds.elements().clear();
-        ds.addAttribute("class", ServletContextDataSource.class.getName());
+                // single sign-on
+                // can't load the class yet, so string
+                overrideBeanTo("activitiLoginHandler", "org.jenkinsci.plugins.jenkow.activiti.override.JenkinsLoginHandler");
 
-        // patch login handler
-        Element lh = (Element)dom.selectSingleNode("/*/*[@id='activitiLoginHandler']");
-        if (lh==null)
-            throw new IllegalStateException("Can't find the login handler bean in "+xml);
-        lh.elements().clear();
-        lh.addAttribute("class", "org.jenkinsci.plugins.jenkow.activiti.override.JenkinsLoginHandler");
+                // inject our own fully configured ProcessEngine
+                overrideBeanTo("processEngine", JenkinsProcessEngineFactory.class.getName());
 
-        // inject our own ProcessEngine
-        Element pe = (Element)dom.selectSingleNode("/*/*[@id='processEngine']");
-        if (pe==null)
-            throw new IllegalStateException("Can't find the processEngine bean in "+xml);
-        pe.elements().clear();
-        pe.attributes().clear();
-        pe.addAttribute("id", "processEngine");
-        pe.addAttribute("class", "org.jenkinsci.plugins.jenkow.activiti.override.JenkinsProcessEngineFactory");
-
-        // no more demo data generation
-        Element ddg = (Element)dom.selectSingleNode("/*/*[@id='demoDataGenerator']");
-        if (ddg==null)
-            throw new IllegalStateException("Can't find the demoDataGenerator bean in "+xml);
-        ddg.getParent().remove(ddg);
-
-        FileOutputStream out = new FileOutputStream(xml);
-        try {
-            new XMLWriter(out, OutputFormat.createPrettyPrint()).write(dom);
-        } finally {
-            out.close();
-        }
+                // no more demo data generation
+                removeBean("demoDataGenerator");
+            }
+        };
     }
 
     private synchronized ProxiedWebApplication getProxyWebApplication(StaplerRequest req) throws ServletException {

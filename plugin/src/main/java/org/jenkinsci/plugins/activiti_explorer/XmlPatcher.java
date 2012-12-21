@@ -38,6 +38,11 @@ abstract class XmlPatcher {
         pe.addAttribute("class", className);
     }
 
+    protected void swapClass(String id, String className) {
+        Element pe = findBean(id);
+        pe.addAttribute("class", className);
+    }
+
     protected void removeBean(String id) {
         findBean(id).detach();
     }

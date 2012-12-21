@@ -21,6 +21,7 @@ import org.kohsuke.stapler.StaplerResponse;
 import javax.inject.Inject;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -56,9 +57,25 @@ public class ActivitiExplorer implements UnprotectedRootAction {
     public void doDynamic(StaplerRequest req, StaplerResponse rsp) throws ServletException, IOException {
         ProxiedWebApplication webApp = getProxyWebApplication(req);
 
-        webApp.getProxiedSession(req.getSession()).setAttribute("jenkins.user", createUserInfo());
+        HttpSession session = req.getSession();
+        HttpSession ps = webApp.getProxiedSession(session);
+        UserDTO oldUser = (UserDTO)ps.getAttribute("jenkins.user");
+        UserDTO newUser = createUserInfo();
+        if (!mapToId(oldUser).equals(mapToId(newUser))) {
+            // force a new session
+            // TODO: improve this in vietnam4j
+            String id = "com.cloudbees.vietnam4j.ProxiedSession"+webApp.getContextPath();
+            session.setAttribute(id,null);
+        }
+
+        ps.setAttribute("jenkins.user", newUser);
+
 
         webApp.handleRequest(req, rsp);
+    }
+
+    private String mapToId(UserDTO o) {
+        return o==null ? "\u0000" : o.id;
     }
 
     /**
@@ -135,6 +152,8 @@ public class ActivitiExplorer implements UnprotectedRootAction {
             public void patch() {
                 // tweak the navigation bar
                 overrideBeanTo("componentFactories", "org.jenkinsci.plugins.jenkow.activiti.override.JenkinsComponentFactories");
+
+                swapClass("explorerApp","org.jenkinsci.plugins.jenkow.activiti.override.ExplorerApp2");
             }
         };
     }

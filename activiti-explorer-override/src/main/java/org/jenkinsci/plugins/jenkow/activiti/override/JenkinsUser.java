@@ -42,4 +42,16 @@ public class JenkinsUser implements LoggedInUser {
     public boolean isUser() {
         return dto.isUser;
     }
+
+    @Override
+    public int hashCode() {
+        return getId().hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof LoggedInUser)
+            return ((LoggedInUser)obj).getId().equals(getId());
+        return false;
+    }
 }

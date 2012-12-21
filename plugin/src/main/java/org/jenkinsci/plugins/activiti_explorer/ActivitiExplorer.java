@@ -62,10 +62,14 @@ public class ActivitiExplorer implements UnprotectedRootAction {
         UserDTO oldUser = (UserDTO)ps.getAttribute("jenkins.user");
         UserDTO newUser = createUserInfo();
         if (!mapToId(oldUser).equals(mapToId(newUser))) {
-            // force a new session
-            // TODO: improve this in vietnam4j
+            // force a new session. AE isn't designed to anticipate the user change without invalidating a session,
+            // but Jenkins does that. So when we see that the user has changed in Jenkins, force a new session
+            // (but only in AE.)
+            // TODO: improve this in vietnam4j. session invalidation behavior should be pluggable
             String id = "com.cloudbees.vietnam4j.ProxiedSession"+webApp.getContextPath();
             session.setAttribute(id,null);
+
+            ps = webApp.getProxiedSession(session);
         }
 
         ps.setAttribute("jenkins.user", newUser);

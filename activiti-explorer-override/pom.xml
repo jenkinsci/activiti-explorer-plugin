@@ -21,7 +21,7 @@
     <dependency>
       <groupId>org.activiti</groupId>
       <artifactId>activiti-engine</artifactId>
-      <version>5.10</version>
+      <version>${activiti.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
@@ -33,7 +33,7 @@
       <groupId>org.activiti</groupId>
       <artifactId>activiti-webapp-explorer2</artifactId>
       <type>jar</type>
-      <version>5.10</version>
+      <version>${activiti.version}</version>
       <scope>provided</scope>
     </dependency>
   </dependencies>

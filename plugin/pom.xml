@@ -57,7 +57,7 @@
                   <groupId>org.activiti</groupId>
                   <artifactId>activiti-webapp-explorer2</artifactId>
                   <type>war</type>
-                  <version>5.10</version>
+                  <version>${activiti.version}</version>
                   <outputDirectory>${project.build.directory}/classes</outputDirectory>
                   <destFileName>activiti-explorer.war</destFileName>
                 </artifactItem>

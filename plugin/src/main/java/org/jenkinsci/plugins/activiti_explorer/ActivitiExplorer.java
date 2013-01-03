@@ -133,7 +133,7 @@ public class ActivitiExplorer implements UnprotectedRootAction {
      * Patch activiti-explorer war file so that we can inject our stuff into it.
      */
     private void patch(File war) throws DocumentException, IOException {
-        new XmlPatcher(new File(war,"WEB-INF/applicationContext.xml")) {
+        new XmlPatcher(new File(war,"WEB-INF/activiti-standalone-context.xml")) {
             public void patch() {
                 // patch data source in
                 overrideBeanTo("dataSource", ServletContextDataSource.class.getName());
